@@ -473,11 +473,11 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 let syncTimeout = null;
 
 // ===== STATE =====
+// employees: liste globale { id, name, color, conges:[] }
+// weekSchedules: { weekIdx: { empId: { 0..5: {type,start,end} } } }
 let state = {
-  weeks: Array.from({length: NB_WEEKS}, (_, i) => ({
-    name: `Semaine ${i+1}`,
-    employees: [],
-  })),
+  employees: [],
+  weekSchedules: Array.from({length: NB_WEEKS}, () => ({})),
   currentWeek: 0,
   currentYear: new Date().getFullYear(),
   activeEmpFilter: [],
@@ -490,14 +490,16 @@ let state = {
 // ===== SAVE / LOAD =====
 function getPayload() {
   return {
-    weeks: state.weeks,
+    employees: state.employees,
+    weekSchedules: state.weekSchedules,
     currentWeek: state.currentWeek,
     currentYear: state.currentYear,
     activeEmpFilter: state.activeEmpFilter,
   };
 }
 function applyPayload(d) {
-  if (d.weeks && d.weeks.length === NB_WEEKS) state.weeks = d.weeks;
+  if (d.employees) state.employees = d.employees;
+  if (d.weekSchedules && d.weekSchedules.length === NB_WEEKS) state.weekSchedules = d.weekSchedules;
   state.currentWeek = d.currentWeek || 0;
   state.currentYear = d.currentYear || new Date().getFullYear();
   state.activeEmpFilter = d.activeEmpFilter || [];
@@ -568,8 +570,15 @@ function timeToPct(t) {
   const [h,m] = t.split(':').map(Number);
   return Math.max(0, Math.min(1, ((h+m/60)-9)/10));
 }
-function curWeek() { return state.weeks[state.currentWeek]; }
-function curEmps() { return curWeek().employees; }
+function curWeek() { return state.currentWeek; }
+// Horaires d'un employé pour la semaine courante
+function getSchedule(empId) {
+  return (state.weekSchedules[state.currentWeek] || {})[empId] || {};
+}
+function setSchedule(empId, schedule) {
+  if (!state.weekSchedules[state.currentWeek]) state.weekSchedules[state.currentWeek] = {};
+  state.weekSchedules[state.currentWeek][empId] = schedule;
+}
 
 // ===== VIEW SWITCHING =====
 function showView(v) {
@@ -582,11 +591,11 @@ function showView(v) {
 // ===== WEEK TABS =====
 function renderWeekTabs() {
   const bar = document.getElementById('weekTabsBar');
-  bar.innerHTML = state.weeks.map((w,i) => {
-    const hasData = w.employees.length > 0;
+  bar.innerHTML = Array.from({length: NB_WEEKS}, (_,i) => {
+    const hasData = state.employees.length > 0 && Object.keys(state.weekSchedules[i]||{}).length > 0;
     return `<button class="week-tab ${i===state.currentWeek?'active':''} ${hasData?'has-data':''}" onclick="switchWeek(${i})">
       <div class="week-tab-dot"></div>
-      ${w.name}
+      Semaine ${i+1}
     </button>`;
   }).join('');
 }
@@ -596,19 +605,16 @@ function switchWeek(idx) {
   renderWeekTabs();
   renderSidebar();
   renderWeek();
-  document.getElementById('sidebarWeekLabel').textContent = `Équipe — ${curWeek().name}`;
-  document.getElementById('weekViewTitle').innerHTML = `${curWeek().name}`;
 }
 
 // ===== SIDEBAR =====
 function renderSidebar() {
-  const emps = curEmps();
   const list = document.getElementById('employeeList');
-  document.getElementById('sidebarWeekLabel').textContent = `Équipe — ${curWeek().name}`;
-  if (!emps.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div>Aucun collègue pour cette semaine</div></div>`; return;
+  document.getElementById('sidebarWeekLabel').textContent = `Équipe — Semaine ${state.currentWeek+1}`;
+  if (!state.employees.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div>Aucun collègue ajouté</div></div>`; return;
   }
-  list.innerHTML = emps.map(e => `
+  list.innerHTML = state.employees.map(e => `
     <div class="employee-card" onclick="openEditEmployee('${e.id}')">
       <div class="emp-avatar" style="background:${e.color}">${getInitials(e.name)}</div>
       <div class="emp-name">${e.name}</div>
@@ -620,7 +626,7 @@ function renderSidebar() {
 
 // ===== ADD EMPLOYEE =====
 function openAddEmployee() {
-  state.selectedColor = COLORS[curEmps().length % COLORS.length];
+  state.selectedColor = COLORS[state.employees.length % COLORS.length];
   renderColorPicker('colorPicker', state.selectedColor, c => { state.selectedColor = c; });
   document.getElementById('empNameInput').value = '';
   document.getElementById('modalAddEmployee').classList.remove('hidden');
@@ -629,19 +635,20 @@ function openAddEmployee() {
 function saveEmployee() {
   const name = document.getElementById('empNameInput').value.trim();
   if (!name) return;
-  curEmps().push({ id:genId(), name, color:state.selectedColor, schedule:{}, conges:[] });
+  // Ajout global
+  state.employees.push({ id:genId(), name, color:state.selectedColor, conges:[] });
   saveData(); closeModal('modalAddEmployee'); renderSidebar(); renderWeek(); renderWeekTabs();
 }
 
-// ===== EDIT EMPLOYEE =====
+// ===== EDIT EMPLOYEE (horaires semaine courante) =====
 function openEditEmployee(id) {
-  const emp = curEmps().find(e=>e.id===id); if (!emp) return;
+  const emp = state.employees.find(e=>e.id===id); if (!emp) return;
   state.editingEmpId = id;
-  state.editSchedule = JSON.parse(JSON.stringify(emp.schedule||{}));
+  state.editSchedule = JSON.parse(JSON.stringify(getSchedule(id)));
   document.getElementById('editEmpTitle').textContent = emp.name;
-  document.getElementById('editEmpSubtitle').textContent = `Horaires pour ${curWeek().name}`;
+  document.getElementById('editEmpSubtitle').textContent = `Horaires pour la Semaine ${state.currentWeek+1}`;
   renderColorPicker('colorPickerEdit', emp.color, c => {
-    const e = curEmps().find(x=>x.id===state.editingEmpId);
+    const e = state.employees.find(x=>x.id===state.editingEmpId);
     if (e) { e.color=c; saveData(); renderSidebar(); renderWeek(); }
   });
   renderScheduleDays(state.editSchedule);
@@ -681,19 +688,22 @@ function saveSchedule() {
     const s=document.getElementById(`start_${i}`), e=document.getElementById(`end_${i}`);
     if(s) state.editSchedule[i].start=s.value; if(e) state.editSchedule[i].end=e.value;
   });
-  const emp=curEmps().find(e=>e.id===state.editingEmpId);
-  if(emp) emp.schedule=state.editSchedule;
+  setSchedule(state.editingEmpId, state.editSchedule);
   saveData(); closeModal('modalEditEmployee'); renderWeek();
 }
 function deleteEmployee() {
-  if(!confirm('Supprimer ce·tte collègue de cette semaine ?')) return;
-  curWeek().employees = curEmps().filter(e=>e.id!==state.editingEmpId);
+  if(!confirm('Supprimer ce·tte collègue définitivement de toutes les semaines ?')) return;
+  const id = state.editingEmpId;
+  state.employees = state.employees.filter(e=>e.id!==id);
+  // Supprime les horaires de toutes les semaines
+  for (let i=0; i<NB_WEEKS; i++) { if (state.weekSchedules[i]) delete state.weekSchedules[i][id]; }
   saveData(); closeModal('modalEditEmployee'); renderSidebar(); renderWeek(); renderWeekTabs();
 }
 function confirmDelete(e,id) {
   e.stopPropagation();
-  if(!confirm('Supprimer ce·tte collègue ?')) return;
-  curWeek().employees = curEmps().filter(x=>x.id!==id);
+  if(!confirm('Supprimer ce·tte collègue de toutes les semaines ?')) return;
+  state.employees = state.employees.filter(x=>x.id!==id);
+  for (let i=0; i<NB_WEEKS; i++) { if (state.weekSchedules[i]) delete state.weekSchedules[i][id]; }
   saveData(); renderSidebar(); renderWeek(); renderWeekTabs();
 }
 
@@ -712,7 +722,7 @@ function selectColor(cId,color) {
 
 // ===== WEEK VIEW =====
 function renderWeek() {
-  document.getElementById('weekViewTitle').textContent = curWeek().name;
+  document.getElementById('weekViewTitle').textContent = `Semaine ${state.currentWeek+1}`;
   renderDays('topDays', [0,1,2]);
   renderDays('bottomDays', [3,4,5]);
 }
@@ -721,7 +731,7 @@ function renderDays(cId, dayIndices) {
   const HOURS=[9,10,11,12,13,14,15,16,17,18,19];
   const gridLines=HOURS.map((_,i)=>`<div class="h-grid-line" style="top:${(i/10*100).toFixed(1)}%"></div>`).join('');
   const hoursCol=`<div class="hours-col">${HOURS.map(h=>`<div class="hour-tick">${h}h</div>`).join('')}</div>`;
-  const emps = curEmps();
+  const emps = state.employees;
 
   document.getElementById(cId).innerHTML = dayIndices.map(dayIdx => {
     let empCols='';
@@ -729,7 +739,8 @@ function renderDays(cId, dayIndices) {
       empCols=`<div class="empty-day" style="flex:1">Aucun·e collègue</div>`;
     } else {
       emps.forEach(emp=>{
-        const sched=emp.schedule&&emp.schedule[dayIdx];
+        const sc = getSchedule(emp.id);
+        const sched = sc[dayIdx];
         const init=getInitials(emp.name);
         const fn=emp.name.split(' ')[0];
         let barHtml='';
@@ -763,14 +774,7 @@ function renderAnnual() {
   renderAnnualGrid();
 }
 function getAllEmps() {
-  // Collect all unique employees across all 6 weeks (by id)
-  const result=[], seen=new Set();
-  state.weeks.forEach(w => {
-    w.employees.forEach(emp => {
-      if(!seen.has(emp.id)){ seen.add(emp.id); result.push(emp); }
-    });
-  });
-  return result;
+  return state.employees;
 }
 function renderEmpFilter() {
   const all = getAllEmps();
@@ -865,9 +869,7 @@ function setCongeOptUI(type){
 }
 function addConge(){
   if(!selectedCongeEmpId||!currentCongeDate) return;
-  // find emp across all weeks
-  let targetEmp=null;
-  state.weeks.forEach(w=>{ const e=w.employees.find(x=>x.id===selectedCongeEmpId); if(e) targetEmp=e; });
+  const targetEmp=state.employees.find(x=>x.id===selectedCongeEmpId);
   if(!targetEmp) return;
   if(!targetEmp.conges) targetEmp.conges=[];
   const existing=targetEmp.conges.findIndex(c=>c.date===currentCongeDate);
@@ -879,7 +881,7 @@ function addConge(){
 }
 function renderCongeList(dateStr){
   const all=[];
-  state.weeks.forEach(w=>w.employees.forEach(emp=>(emp.conges||[]).filter(c=>c.date===dateStr).forEach(c=>all.push({emp,c}))));
+  state.employees.forEach(emp=>(emp.conges||[]).filter(c=>c.date===dateStr).forEach(c=>all.push({emp,c})));
   const wrap=document.getElementById('congeExistingWrap');
   const list=document.getElementById('congeList');
   if(!all.length){wrap.classList.add('hidden');return;}
@@ -894,7 +896,8 @@ function renderCongeList(dateStr){
     </div>`).join('');
 }
 function removeConge(empId,date){
-  state.weeks.forEach(w=>{ const e=w.employees.find(x=>x.id===empId); if(e) e.conges=(e.conges||[]).filter(c=>c.date!==date); });
+  const emp=state.employees.find(x=>x.id===empId);
+  if(emp) emp.conges=(emp.conges||[]).filter(c=>c.date!==date);
   saveData();
   if(empId===selectedCongeEmpId){selectedCongeEmpId=null;document.getElementById('congeForm').classList.add('hidden');}
   renderCongePeopleList(date); renderCongeList(date); renderAnnualGrid();
@@ -906,14 +909,15 @@ document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{
 
 // ===== EXPORT PDF =====
 function exportPDF(){
-  const w = curWeek();
-  const emps = w.employees;
+  const weekIdx = state.currentWeek;
+  const emps = state.employees;
   const HOURS=[9,10,11,12,13,14,15,16,17,18,19];
   const SLOT_H=10;
   const gridLinesHtml=HOURS.map((_,i)=>`<div style="position:absolute;left:0;right:0;top:${(i/10*100).toFixed(1)}%;height:1px;background:#efefef;"></div>`).join('');
 
   function buildEmpColPrint(emp,dayIdx){
-    const sched=emp.schedule&&emp.schedule[dayIdx];
+    const sc = (state.weekSchedules[weekIdx]||{})[emp.id]||{};
+    const sched = sc[dayIdx];
     const init=getInitials(emp.name);
     const fn=emp.name.split(' ')[0];
     let barHtml='';
@@ -957,9 +961,10 @@ function exportPDF(){
     </div>`;
   }).join('');
 
+  const weekName = `Semaine ${weekIdx+1}`;
   const legend=emps.map(e=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:9px;height:9px;border-radius:2px;background:${e.color};"></div><span style="font-size:7.5px;color:#475467;">${e.name}</span></div>`).join('');
 
-  const printHTML=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${w.name}</title>
+  const printHTML=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${weekName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:A4 landscape;margin:9mm 11mm;}
@@ -971,7 +976,7 @@ function exportPDF(){
 </head><body>
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #4f46e5;padding-bottom:6px;margin-bottom:7px;flex-shrink:0;">
   <div style="font-family:monospace;font-size:14px;font-weight:600;">planning<span style="color:#4f46e5;">pro</span></div>
-  <div style="font-size:13px;font-weight:700;color:#101828;">${w.name}</div>
+  <div style="font-size:13px;font-weight:700;color:#101828;">${weekName}</div>
   <div style="font-size:7.5px;color:#aaa;font-family:monospace;">Imprimé le ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
 </div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:5px;flex:1;min-height:0;">
@@ -979,7 +984,7 @@ function exportPDF(){
 </div>
 <div style="margin-top:6px;border-top:1px solid #eee;padding-top:5px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
   <div style="display:flex;gap:12px;flex-wrap:wrap;">${legend}</div>
-  <div style="font-size:7px;color:#ccc;font-family:monospace;">${w.name} — planningpro</div>
+  <div style="font-size:7px;color:#ccc;font-family:monospace;">${weekName} — planningpro</div>
 </div>
 <script>window.onload=()=>window.print();<\/script>
 </body></html>`;
