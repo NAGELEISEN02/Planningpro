@@ -312,7 +312,7 @@
     <button class="view-tab" onclick="showView('annual')">Congés annuels</button>
   </div>
   <div class="header-right">
-    <div id="currentWeekBadge" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;"></div>
+    <div id="syncStatus" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;min-width:120px;text-align:right;"></div>
     <button class="btn-print" onclick="exportPDF()">🖨 Exporter PDF</button>
   </div>
 </header>
@@ -466,18 +466,21 @@ const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Aoû
 const NB_WEEKS = 6;
 const STORAGE_KEY = 'planningpro_v3';
 
+// ===== JSONBIN CONFIG =====
+const JSONBIN_ID  = '69e2441b856a68218944ccc4';
+const JSONBIN_KEY = '$2a$10$OoS8ZL1Nf/lL/J2hbW1f4u1L7zBYNqGfFA.meRsPq5GoeDBFuwp4y';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+let syncTimeout = null;
+
 // ===== STATE =====
-// weeks: array of 6 independent week objects, each with { employees: [], name: '' }
-// employees in each week: { id, name, color, schedule:{0..5: {type,start,end}}, conges:[] }
 let state = {
   weeks: Array.from({length: NB_WEEKS}, (_, i) => ({
     name: `Semaine ${i+1}`,
     employees: [],
   })),
-  currentWeek: 0,       // 0-5 active week tab
+  currentWeek: 0,
   currentYear: new Date().getFullYear(),
   activeEmpFilter: [],
-  // UI transient
   selectedColor: COLORS[0],
   editingEmpId: null,
   editSchedule: {},
@@ -485,27 +488,77 @@ let state = {
 };
 
 // ===== SAVE / LOAD =====
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      weeks: state.weeks,
-      currentWeek: state.currentWeek,
-      currentYear: state.currentYear,
-      activeEmpFilter: state.activeEmpFilter,
-    }));
-  } catch(e) {}
+function getPayload() {
+  return {
+    weeks: state.weeks,
+    currentWeek: state.currentWeek,
+    currentYear: state.currentYear,
+    activeEmpFilter: state.activeEmpFilter,
+  };
 }
-function loadData() {
+function applyPayload(d) {
+  if (d.weeks && d.weeks.length === NB_WEEKS) state.weeks = d.weeks;
+  state.currentWeek = d.currentWeek || 0;
+  state.currentYear = d.currentYear || new Date().getFullYear();
+  state.activeEmpFilter = d.activeEmpFilter || [];
+}
+
+// Sauvegarde locale immédiate + cloud avec délai (évite trop d'appels API)
+function saveData() {
+  const payload = getPayload();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  // Debounce cloud sync : attend 1.5s après la dernière action
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => syncToCloud(payload), 1500);
+}
+
+async function syncToCloud(payload) {
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_KEY,
+        'X-Bin-Versioning': 'false',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch(e) { console.warn('Sync cloud échoué', e); }
+}
+
+async function loadData() {
+  showSyncStatus('⏳ Chargement...');
+  try {
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const d = json.record;
+      if (d && d.weeks) {
+        applyPayload(d);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+        showSyncStatus('✅ Synchronisé', 2000);
+        return true;
+      }
+    }
+  } catch(e) {
+    console.warn('Chargement cloud échoué, utilisation du cache local');
+  }
+  // Fallback local
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const d = JSON.parse(raw);
-    if (d.weeks && d.weeks.length === NB_WEEKS) state.weeks = d.weeks;
-    state.currentWeek = d.currentWeek || 0;
-    state.currentYear = d.currentYear || new Date().getFullYear();
-    state.activeEmpFilter = d.activeEmpFilter || [];
-    return true;
-  } catch(e) { return false; }
+    if (raw) { applyPayload(JSON.parse(raw)); showSyncStatus('📱 Mode local', 2000); return true; }
+  } catch(e) {}
+  showSyncStatus('');
+  return false;
+}
+
+function showSyncStatus(msg, hideAfter=0) {
+  let el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = msg;
+  if (hideAfter) setTimeout(() => { el.textContent = ''; }, hideAfter);
 }
 
 // ===== HELPERS =====
@@ -937,10 +990,11 @@ function exportPDF(){
 }
 
 // ===== INIT =====
-loadData();
-renderWeekTabs();
-renderSidebar();
-renderWeek();
+loadData().then(() => {
+  renderWeekTabs();
+  renderSidebar();
+  renderWeek();
+});
 
 // ===== LOGIN =====
 const PWD_HASH = '7f2d8e4a1c6b5f9e3d0a2c8b4e6f1a3d'; // placeholder, real check below
