@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlanningPro — 6 semaines</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --white: #ffffff;
+    --surface2: #f3f4f6;
+    --surface3: #eaecf0;
+    --border: #e4e7ec;
+    --border2: #d0d5dd;
+    --text: #101828;
+    --text2: #475467;
+    --text3: #98a2b3;
+    --accent: #4f46e5;
+    --accent-light: #eef2ff;
+    --accent-hover: #4338ca;
+    --red: #f04438;
+    --radius: 10px;
+    --radius-sm: 7px;
+    --shadow-sm: 0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.06);
+    --shadow-lg: 0 12px 24px -4px rgba(16,24,40,0.12), 0 4px 8px -2px rgba(16,24,40,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 13.5px; -webkit-font-smoothing: antialiased; }
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #f0f1ff 0%, #f7f8fa 60%, #eef2ff 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 44px 40px;
+    width: 380px;
+    max-width: 95vw;
+    box-shadow: 0 20px 48px -8px rgba(79,70,229,0.15), 0 4px 12px rgba(16,24,40,0.08);
+    text-align: center;
+  }
+  .login-logo {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500;
+    color: var(--text); margin-bottom: 28px;
+  }
+  .login-logo-icon {
+    width: 36px; height: 36px; background: var(--accent);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .login-logo span { color: var(--accent); }
+  .login-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+  .login-input-wrap { position: relative; margin-bottom: 14px; }
+  .login-input {
+    width: 100%; padding: 12px 44px 12px 16px;
+    border: 1.5px solid var(--border2); border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif; font-size: 15px; color: var(--text);
+    background: var(--white); outline: none; letter-spacing: 2px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-align: center;
+  }
+  .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+  .login-input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(240,68,56,0.1); animation: shake 0.35s ease; }
+  .login-eye {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; color: var(--text3); font-size: 16px; user-select: none;
+    transition: color 0.12s;
+  }
+  .login-eye:hover { color: var(--text2); }
+  .login-btn {
+    width: 100%; padding: 13px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+  }
+  .login-btn:hover { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(79,70,229,0.4); transform: translateY(-1px); }
+  .login-btn:active { transform: translateY(0); }
+  .login-error {
+    margin-top: 10px; font-size: 12.5px; color: var(--red);
+    font-weight: 500; opacity: 0; transition: opacity 0.2s;
+  }
+  .login-error.visible { opacity: 1; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+  }
+  #appWrapper { display: none; }
+
+  /* ── HEADER ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 58px;
+    background: var(--white); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);
+  }
+  .logo { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: var(--text); letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+  .logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .logo span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* ── TOP TABS (Vue semaine / Annuel) ── */
+  .view-tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; border: 1px solid var(--border); }
+  .view-tab { padding: 6px 16px; border-radius: 5px; cursor: pointer; font-weight: 500; color: var(--text2); transition: all 0.15s; border: none; background: none; font-family: 'Inter', sans-serif; font-size: 13px; }
+  .view-tab.active { background: var(--white); color: var(--text); box-shadow: var(--shadow-sm); }
+  .view-tab:hover:not(.active) { color: var(--text); }
+
+  /* ── WEEK TABS BAR ── */
+  .week-tabs-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+  }
+  .week-tabs-bar::-webkit-scrollbar { height: 0; }
+  .week-tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'Inter', sans-serif;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .week-tab:hover:not(.active) { color: var(--text); }
+  .week-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .week-tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.15s; }
+  .week-tab.active .week-tab-dot { background: var(--accent); }
+  .week-tab.has-data .week-tab-dot { background: #12b76a; }
+
+  /* ── LAYOUT ── */
+  .main { display: flex; min-height: calc(100vh - 103px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 230px; min-width: 230px; background: var(--white); border-right: 1px solid var(--border); padding: 18px 13px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+  .sidebar-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); padding: 0 6px; }
+  .employee-list { display: flex; flex-direction: column; gap: 2px; }
+  .employee-card { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.12s; position: relative; }
+  .employee-card:hover { background: var(--surface2); }
+  .emp-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; flex-shrink: 0; }
+  .emp-name { font-weight: 500; font-size: 12.5px; flex: 1; color: var(--text); }
+  .emp-actions { display: flex; opacity: 0; transition: opacity 0.12s; }
+  .employee-card:hover .emp-actions { opacity: 1; }
+  .icon-btn { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border); background: none; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.12s; }
+  .icon-btn.del:hover { background: #fef3f2; color: var(--red); border-color: #fda29b; }
+  .btn-add-emp { display: flex; align-items: center; gap: 7px; padding: 8px 9px; border-radius: var(--radius-sm); border: 1px dashed var(--border2); background: none; color: var(--text2); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 500; transition: all 0.15s; width: 100%; }
+  .btn-add-emp:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .section-divider { height: 1px; background: var(--border); }
+
+  /* ── CONTENT ── */
+  .content { flex: 1; padding: 22px 24px; overflow-x: auto; background: var(--bg); }
+
+  /* ── WEEK VIEW ── */
+  .week-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .week-title { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .week-title span { color: var(--accent); }
+  .week-actions { display: flex; align-items: center; gap: 8px; }
+  .btn { padding: 8px 16px; border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.12s; border: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--white); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: #fff; color: var(--red); border: 1px solid #fda29b; }
+  .btn-danger:hover { background: #fef3f2; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-print { background: var(--accent); color: #fff; border: none; padding: 8px 14px; border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(79,70,229,0.3); transition: all 0.15s; }
+  .btn-print:hover { background: var(--accent-hover); }
+
+  .days-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; margin-bottom: 11px; }
+
+  /* ── DAY CARD ── */
+  .day-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .day-card-header { padding: 9px 13px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .day-name { font-weight: 600; font-size: 12.5px; color: var(--text); }
+  .day-date-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  .day-timeline { display: flex; padding: 7px 9px 9px; gap: 0; }
+  .hours-col { width: 32px; flex-shrink: 0; display: flex; flex-direction: column; padding-top: 26px; }
+  .hour-tick { flex: 1; font-size: 8.5px; color: var(--text3); font-family: 'DM Mono', monospace; display: flex; align-items: flex-start; justify-content: flex-end; padding-right: 5px; position: relative; }
+  .hour-tick::after { content:''; position:absolute; right:0; top:0; width:4px; height:1px; background:var(--border); }
+
+  .emp-cols-wrap { flex: 1; display: flex; gap: 3px; min-height: 200px; }
+  .emp-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .emp-col-header { height: 26px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; margin-bottom: 2px; }
+  .emp-col-avatar { width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; color: #fff; }
+  .emp-col-name { font-size: 8px; font-weight: 600; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; }
+  .emp-col-bars { flex: 1; position: relative; background: var(--bg); border-radius: 5px; border: 1px solid var(--border); overflow: hidden; }
+  .emp-col-bars .h-grid-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--surface3); }
+  .v-bar { position: absolute; left: 35%; right: 35%; border-radius: 99px; cursor: default; transition: left 0.15s, right 0.15s; }
+  .v-bar:hover { left: 25%; right: 25%; }
+  .v-bar.v-conge { opacity: 0.85; left: 30%; right: 30%; background-image: repeating-linear-gradient(-45deg,transparent,transparent 3px,rgba(255,255,255,0.45) 3px,rgba(255,255,255,0.45) 6px) !important; border: 1px solid; border-radius: 6px; }
+  .v-absent-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text3); font-style: italic; writing-mode: vertical-rl; }
+  .empty-day { padding: 12px; font-size: 11px; color: var(--text3); text-align: center; font-style: italic; }
+
+  /* ── ANNUAL VIEW ── */
+  .annual-controls { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+  .year-nav { display: flex; align-items: center; gap: 8px; }
+  .nav-btn { width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--white); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.12s; box-shadow: var(--shadow-sm); }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .year-label { font-size: 17px; font-weight: 700; color: var(--text); min-width: 44px; text-align: center; }
+  .emp-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+  .emp-chip { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.12s; color: var(--text2); box-shadow: var(--shadow-sm); }
+  .emp-chip.active { border-width: 1.5px; }
+  .emp-chip .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .months-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .month-block { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow-sm); }
+  .month-label { font-size: 11.5px; font-weight: 700; color: var(--text); margin-bottom: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .month-days { display: flex; flex-wrap: wrap; gap: 3px; }
+  .day-cell { position: relative; width: 25px; height: 25px; border-radius: 5px; background: var(--bg); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.12s; overflow: hidden; }
+  .day-cell:hover { border-color: var(--accent); z-index: 1; }
+  .day-num { font-size: 9px; color: var(--text2); font-family: 'DM Mono', monospace; position: relative; z-index: 1; }
+  .day-cell.weekend { opacity: 0.45; }
+  .day-conge-bar { position: absolute; inset: 0; opacity: 0.4; }
+  .day-conge-label { position: relative; font-size: 7px; font-weight: 700; color: var(--text); z-index: 1; }
+
+  /* ── MODALS ── */
+  .overlay { position: fixed; inset: 0; background: rgba(16,24,40,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+  @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+  .modal { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 26px; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: slideUp 0.18s ease; }
+  .modal-wide { width: 620px; }
+  @keyframes slideUp { from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1} }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+  .modal-subtitle { font-size: 12px; color: var(--text3); margin-top: -13px; margin-bottom: 16px; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 11.5px; font-weight: 600; color: var(--text2); margin-bottom: 5px; }
+  .field input { width: 100%; background: var(--white); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); padding: 8px 11px; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: border-color 0.12s, box-shadow 0.12s; }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+  .color-picker { display: flex; flex-wrap: wrap; gap: 7px; }
+  .color-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; transition: transform 0.12s; border: 2.5px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.selected { border-color: #fff; box-shadow: 0 0 0 2.5px var(--accent), 0 1px 3px rgba(0,0,0,0.1); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  .schedule-days { display: flex; flex-direction: column; gap: 7px; }
+  .schedule-day { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .schedule-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .schedule-day-name { font-weight: 600; font-size: 12px; color: var(--text); }
+  .toggle-switch { display: flex; background: var(--white); border-radius: 20px; padding: 2px; gap: 2px; border: 1px solid var(--border); }
+  .toggle-opt { padding: 3px 10px; border-radius: 16px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.12s; color: var(--text3); }
+  .toggle-opt.active { background: var(--accent); color: #fff; }
+  .time-row { display: flex; align-items: center; gap: 7px; }
+  .time-sep { color: var(--text3); font-size: 12px; }
+  .time-input { background: var(--white); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); padding: 5px 8px; font-family: 'DM Mono', monospace; font-size: 12.5px; width: 85px; outline: none; transition: border-color 0.12s; }
+  .time-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+
+  /* Congé modal */
+  .conge-opt { flex:1; padding:11px; border-radius:var(--radius-sm); border:2px solid var(--border); background:var(--surface2); cursor:pointer; text-align:center; transition:all 0.15s; }
+  .conge-opt:hover { border-color:var(--accent); background:var(--accent-light); }
+  .conge-opt-active { border-color:var(--accent)!important; background:var(--accent-light)!important; }
+  .conge-person-row { display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:var(--radius-sm); border:2px solid var(--border); background:var(--white); cursor:pointer; transition:all 0.15s; }
+  .conge-person-row:hover { background:var(--surface2); }
+  .conge-person-row.selected { border-width:2px; }
+  .conge-person-name { font-weight:500; font-size:12.5px; color:var(--text); flex:1; }
+  .conge-person-status { font-size:11px; color:var(--text3); }
+  .conge-list { display:flex; flex-direction:column; gap:6px; }
+  .conge-item { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 11px; }
+  .conge-item-date { font-weight:600; font-size:12px; color:var(--text); }
+  .conge-item-type { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .hidden { display: none !important; }
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:160px; color:var(--text3); font-size:12.5px; gap:8px; }
+  .empty-icon { font-size:26px; opacity:0.3; }
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">📅</div>
+      planning<span>pro</span>
+    </div>
+    <div class="login-title">Accès sécurisé</div>
+    <div class="login-sub">Entrez le mot de passe pour accéder au planning</div>
+    <div class="login-input-wrap">
+      <input class="login-input" type="password" id="loginInput" placeholder="Mot de passe"
+        onkeydown="if(event.key==='Enter')checkPassword()">
+      <span class="login-eye" id="loginEye" onclick="togglePwdVisibility()">👁</span>
+    </div>
+    <button class="login-btn" onclick="checkPassword()">Accéder au planning</button>
+    <div class="login-error" id="loginError">Mot de passe incorrect. Réessayez.</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="appWrapper">
+
+<header>
+  <div class="logo"><div class="logo-icon">📅</div>planning<span>pro</span></div>
+  <div class="view-tabs">
+    <button class="view-tab active" onclick="showView('week')">Planning</button>
+    <button class="view-tab" onclick="showView('annual')">Congés annuels</button>
+  </div>
+  <div class="header-right">
+    <div id="currentWeekBadge" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;"></div>
+    <button class="btn-print" onclick="exportPDF()">🖨 Exporter PDF</button>
+  </div>
+</header>
+
+<!-- WEEK TABS BAR -->
+<div class="week-tabs-bar" id="weekTabsBar"></div>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title" id="sidebarWeekLabel">Équipe — Semaine 1</div>
+    <div class="employee-list" id="employeeList"></div>
+    <div class="section-divider"></div>
+    <button class="btn-add-emp" onclick="openAddEmployee()">
+      <span style="font-size:14px;line-height:1">＋</span> Ajouter un·e collègue
+    </button>
+  </aside>
+
+  <!-- WEEK VIEW -->
+  <div class="content" id="viewWeek">
+    <div class="week-header">
+      <div class="week-title" id="weekViewTitle">Semaine <span>1</span></div>
+      <div class="week-actions">
+        <!-- empty, actions in header -->
+      </div>
+    </div>
+    <div class="days-grid" id="topDays"></div>
+    <div class="days-grid" id="bottomDays"></div>
+  </div>
+
+  <!-- ANNUAL VIEW -->
+  <div class="content hidden" id="viewAnnual">
+    <div class="annual-controls">
+      <div class="year-nav">
+        <button class="nav-btn" onclick="changeYear(-1)">‹</button>
+        <div class="year-label" id="yearLabel">2025</div>
+        <button class="nav-btn" onclick="changeYear(1)">›</button>
+      </div>
+      <div style="color:var(--text3);font-size:12px;font-weight:500;">Semaine :</div>
+      <div id="annualWeekFilter" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <div style="color:var(--text3);font-size:12px;font-weight:500;margin-left:8px;">Collègue :</div>
+      <div class="emp-filter" id="empFilter"></div>
+    </div>
+    <div id="annualGrid"></div>
+  </div>
+</div>
+
+<!-- MODAL Ajouter -->
+<div class="overlay hidden" id="modalAddEmployee">
+  <div class="modal">
+    <div class="modal-title">Nouveau·elle collègue</div>
+    <div class="field"><label>Prénom et nom</label><input type="text" id="empNameInput" placeholder="Ex : Marie Dupont"></div>
+    <div class="field"><label>Couleur</label><div class="color-picker" id="colorPicker"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalAddEmployee')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL Éditer -->
+<div class="overlay hidden" id="modalEditEmployee">
+  <div class="modal modal-wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="modal-title" id="editEmpTitle" style="margin-bottom:0">Horaires</div>
+      <button class="btn btn-danger btn-sm" onclick="deleteEmployee()">Supprimer</button>
+    </div>
+    <div class="modal-subtitle" id="editEmpSubtitle"></div>
+    <div class="field"><label>Couleur</label><div class="color-picker" id="colorPickerEdit"></div></div>
+    <div class="field" style="margin-top:13px;"><label>Horaires par jour</label><div class="schedule-days" id="scheduleDays"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalEditEmployee')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveSchedule()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL Congés -->
+<div class="overlay hidden" id="modalConge">
+  <div class="modal" style="width:460px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div class="modal-title" id="congeTitle" style="margin-bottom:2px;">Congés</div>
+        <div id="congeDateLabel" style="font-size:11.5px;color:var(--text3);font-family:'DM Mono',monospace;"></div>
+      </div>
+      <button onclick="closeModal('modalConge')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--text3);padding:2px 5px;border-radius:5px;line-height:1;">✕</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:7px;">Sélectionner un·e collègue</div>
+      <div id="congePeopleList" style="display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+    <div id="congeForm" class="hidden">
+      <div style="height:1px;background:var(--border);margin-bottom:14px;"></div>
+      <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:9px;">Type de congé</div>
+      <div style="display:flex;gap:7px;margin-bottom:12px;">
+        <div id="congeOptJour" class="conge-opt conge-opt-active" onclick="setCongeType('jour')">
+          <div style="font-size:16px;margin-bottom:3px;">🌅</div>
+          <div style="font-weight:600;font-size:11.5px;">Journée entière</div>
+          <div style="font-size:9.5px;color:var(--text3);margin-top:2px;">9h – 19h</div>
+        </div>
+        <div id="congeOptHeures" class="conge-opt" onclick="setCongeType('heures')">
+          <div style="font-size:16px;margin-bottom:3px;">⏱</div>
+          <div style="font-weight:600;font-size:11.5px;">Heures précises</div>
+          <div style="font-size:9.5px;color:var(--text3);margin-top:2px;">Choisir la plage</div>
+        </div>
+      </div>
+      <div id="congeHeuresField" class="hidden" style="margin-bottom:13px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;">Plage horaire</div>
+        <div class="time-row">
+          <input type="time" class="time-input" id="congeStart" value="09:00">
+          <span class="time-sep">→</span>
+          <input type="time" class="time-input" id="congeEnd" value="13:00">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="addConge()">Enregistrer le congé</button>
+    </div>
+    <div id="congeExistingWrap" class="hidden">
+      <div style="height:1px;background:var(--border);margin:14px 0 11px;"></div>
+      <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:7px;">Congés enregistrés ce jour</div>
+      <div class="conge-list" id="congeList"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#appWrapper -->
+
+<script>
+// ===== CONSTANTS =====
+const COLORS = ['#4f46e5','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#84cc16','#6366f1','#14b8a6'];
+const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const NB_WEEKS = 6;
+const STORAGE_KEY = 'planningpro_v3';
+
+// ===== STATE =====
+// weeks: array of 6 independent week objects, each with { employees: [], name: '' }
+// employees in each week: { id, name, color, schedule:{0..5: {type,start,end}}, conges:[] }
+let state = {
+  weeks: Array.from({length: NB_WEEKS}, (_, i) => ({
+    name: `Semaine ${i+1}`,
+    employees: [],
+  })),
+  currentWeek: 0,       // 0-5 active week tab
+  currentYear: new Date().getFullYear(),
+  activeEmpFilter: [],
+  annualWeekFilter: -1, // -1 = all
+  // UI transient
+  selectedColor: COLORS[0],
+  editingEmpId: null,
+  editSchedule: {},
+  congeType: 'jour',
+};
+
+// ===== SAVE / LOAD =====
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      weeks: state.weeks,
+      currentWeek: state.currentWeek,
+      currentYear: state.currentYear,
+      activeEmpFilter: state.activeEmpFilter,
+      annualWeekFilter: state.annualWeekFilter,
+    }));
+  } catch(e) {}
+}
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (d.weeks && d.weeks.length === NB_WEEKS) state.weeks = d.weeks;
+    state.currentWeek = d.currentWeek || 0;
+    state.currentYear = d.currentYear || new Date().getFullYear();
+    state.activeEmpFilter = d.activeEmpFilter || [];
+    state.annualWeekFilter = d.annualWeekFilter !== undefined ? d.annualWeekFilter : -1;
+    return true;
+  } catch(e) { return false; }
+}
+
+// ===== HELPERS =====
+function genId() { return '_' + Math.random().toString(36).slice(2,9); }
+function getInitials(n) { return n.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function timeToPct(t) {
+  const [h,m] = t.split(':').map(Number);
+  return Math.max(0, Math.min(1, ((h+m/60)-9)/10));
+}
+function curWeek() { return state.weeks[state.currentWeek]; }
+function curEmps() { return curWeek().employees; }
+
+// ===== VIEW SWITCHING =====
+function showView(v) {
+  document.getElementById('viewWeek').classList.toggle('hidden', v!=='week');
+  document.getElementById('viewAnnual').classList.toggle('hidden', v!=='annual');
+  document.querySelectorAll('.view-tab').forEach((t,i) => t.classList.toggle('active', (v==='week'&&i===0)||(v==='annual'&&i===1)));
+  if (v==='annual') renderAnnual();
+}
+
+// ===== WEEK TABS =====
+function renderWeekTabs() {
+  const bar = document.getElementById('weekTabsBar');
+  bar.innerHTML = state.weeks.map((w,i) => {
+    const hasData = w.employees.length > 0;
+    return `<button class="week-tab ${i===state.currentWeek?'active':''} ${hasData?'has-data':''}" onclick="switchWeek(${i})">
+      <div class="week-tab-dot"></div>
+      ${w.name}
+    </button>`;
+  }).join('');
+}
+function switchWeek(idx) {
+  state.currentWeek = idx;
+  saveData();
+  renderWeekTabs();
+  renderSidebar();
+  renderWeek();
+  document.getElementById('sidebarWeekLabel').textContent = `Équipe — ${curWeek().name}`;
+  document.getElementById('weekViewTitle').innerHTML = `${curWeek().name}`;
+}
+
+// ===== SIDEBAR =====
+function renderSidebar() {
+  const emps = curEmps();
+  const list = document.getElementById('employeeList');
+  document.getElementById('sidebarWeekLabel').textContent = `Équipe — ${curWeek().name}`;
+  if (!emps.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div>Aucun collègue pour cette semaine</div></div>`; return;
+  }
+  list.innerHTML = emps.map(e => `
+    <div class="employee-card" onclick="openEditEmployee('${e.id}')">
+      <div class="emp-avatar" style="background:${e.color}">${getInitials(e.name)}</div>
+      <div class="emp-name">${e.name}</div>
+      <div class="emp-actions">
+        <button class="icon-btn del" onclick="confirmDelete(event,'${e.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+// ===== ADD EMPLOYEE =====
+function openAddEmployee() {
+  state.selectedColor = COLORS[curEmps().length % COLORS.length];
+  renderColorPicker('colorPicker', state.selectedColor, c => { state.selectedColor = c; });
+  document.getElementById('empNameInput').value = '';
+  document.getElementById('modalAddEmployee').classList.remove('hidden');
+  setTimeout(() => document.getElementById('empNameInput').focus(), 60);
+}
+function saveEmployee() {
+  const name = document.getElementById('empNameInput').value.trim();
+  if (!name) return;
+  curEmps().push({ id:genId(), name, color:state.selectedColor, schedule:{}, conges:[] });
+  saveData(); closeModal('modalAddEmployee'); renderSidebar(); renderWeek(); renderWeekTabs();
+}
+
+// ===== EDIT EMPLOYEE =====
+function openEditEmployee(id) {
+  const emp = curEmps().find(e=>e.id===id); if (!emp) return;
+  state.editingEmpId = id;
+  state.editSchedule = JSON.parse(JSON.stringify(emp.schedule||{}));
+  document.getElementById('editEmpTitle').textContent = emp.name;
+  document.getElementById('editEmpSubtitle').textContent = `Horaires pour ${curWeek().name}`;
+  renderColorPicker('colorPickerEdit', emp.color, c => {
+    const e = curEmps().find(x=>x.id===state.editingEmpId);
+    if (e) { e.color=c; saveData(); renderSidebar(); renderWeek(); }
+  });
+  renderScheduleDays(state.editSchedule);
+  document.getElementById('modalEditEmployee').classList.remove('hidden');
+}
+function renderScheduleDays(sc) {
+  document.getElementById('scheduleDays').innerHTML = DAYS.map((day,i) => {
+    const s = sc[i]||{type:'present',start:'09:00',end:'19:00'};
+    return `<div class="schedule-day">
+      <div class="schedule-day-header">
+        <div class="schedule-day-name">${day}</div>
+        <div class="toggle-switch">
+          <div class="toggle-opt ${s.type==='present'?'active':''}" onclick="setDayType(${i},'present')">Présent·e</div>
+          <div class="toggle-opt ${s.type==='absent'?'active':''}" onclick="setDayType(${i},'absent')">Absent·e</div>
+        </div>
+      </div>
+      <div class="time-row" id="timeRow_${i}" style="${s.type==='absent'?'opacity:0.35;pointer-events:none':''}">
+        <span style="font-size:10.5px;color:var(--text3);font-weight:500">De</span>
+        <input type="time" class="time-input" id="start_${i}" value="${s.start||'09:00'}">
+        <span class="time-sep">→</span>
+        <span style="font-size:10.5px;color:var(--text3);font-weight:500">à</span>
+        <input type="time" class="time-input" id="end_${i}" value="${s.end||'19:00'}">
+      </div>
+    </div>`;
+  }).join('');
+}
+function setDayType(idx, type) {
+  if (!state.editSchedule[idx]) state.editSchedule[idx]={start:'09:00',end:'19:00'};
+  state.editSchedule[idx].type=type;
+  const row=document.getElementById(`timeRow_${idx}`);
+  row.style.opacity=type==='absent'?'0.35':'1'; row.style.pointerEvents=type==='absent'?'none':'auto';
+  row.previousElementSibling.querySelectorAll('.toggle-opt').forEach((o,i2)=>o.classList.toggle('active',(i2===0&&type==='present')||(i2===1&&type==='absent')));
+}
+function saveSchedule() {
+  DAYS.forEach((_,i)=>{
+    if(!state.editSchedule[i]) state.editSchedule[i]={type:'present'};
+    const s=document.getElementById(`start_${i}`), e=document.getElementById(`end_${i}`);
+    if(s) state.editSchedule[i].start=s.value; if(e) state.editSchedule[i].end=e.value;
+  });
+  const emp=curEmps().find(e=>e.id===state.editingEmpId);
+  if(emp) emp.schedule=state.editSchedule;
+  saveData(); closeModal('modalEditEmployee'); renderWeek();
+}
+function deleteEmployee() {
+  if(!confirm('Supprimer ce·tte collègue de cette semaine ?')) return;
+  curWeek().employees = curEmps().filter(e=>e.id!==state.editingEmpId);
+  saveData(); closeModal('modalEditEmployee'); renderSidebar(); renderWeek(); renderWeekTabs();
+}
+function confirmDelete(e,id) {
+  e.stopPropagation();
+  if(!confirm('Supprimer ce·tte collègue ?')) return;
+  curWeek().employees = curEmps().filter(x=>x.id!==id);
+  saveData(); renderSidebar(); renderWeek(); renderWeekTabs();
+}
+
+// ===== COLOR PICKER =====
+function renderColorPicker(cId, selected, onChange) {
+  const el=document.getElementById(cId);
+  el.innerHTML=COLORS.map(c=>`<div class="color-swatch ${c===selected?'selected':''}" style="background:${c}" data-color="${c}" onclick="selectColor('${cId}','${c}')"></div>`).join('');
+  el._onChange=onChange;
+}
+function selectColor(cId,color) {
+  const el=document.getElementById(cId);
+  el.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('selected',s.dataset.color===color));
+  if(el._onChange) el._onChange(color);
+  if(cId==='colorPicker') state.selectedColor=color;
+}
+
+// ===== WEEK VIEW =====
+function renderWeek() {
+  document.getElementById('weekViewTitle').textContent = curWeek().name;
+  renderDays('topDays', [0,1,2]);
+  renderDays('bottomDays', [3,4,5]);
+}
+
+function renderDays(cId, dayIndices) {
+  const HOURS=[9,10,11,12,13,14,15,16,17,18,19];
+  const gridLines=HOURS.map((_,i)=>`<div class="h-grid-line" style="top:${(i/10*100).toFixed(1)}%"></div>`).join('');
+  const hoursCol=`<div class="hours-col">${HOURS.map(h=>`<div class="hour-tick">${h}h</div>`).join('')}</div>`;
+  const emps = curEmps();
+
+  document.getElementById(cId).innerHTML = dayIndices.map(dayIdx => {
+    let empCols='';
+    if(!emps.length) {
+      empCols=`<div class="empty-day" style="flex:1">Aucun·e collègue</div>`;
+    } else {
+      emps.forEach(emp=>{
+        const sched=emp.schedule&&emp.schedule[dayIdx];
+        const init=getInitials(emp.name);
+        const fn=emp.name.split(' ')[0];
+        let barHtml='';
+        if(!sched||sched.type==='absent'){
+          barHtml=`<div class="v-absent-label">Absent·e</div>`;
+        } else {
+          const tP=timeToPct(sched.start||'09:00')*100;
+          const hP=(timeToPct(sched.end||'19:00')-timeToPct(sched.start||'09:00'))*100;
+          barHtml=`<div class="v-bar" style="top:${tP.toFixed(1)}%;height:${Math.max(hP,2).toFixed(1)}%;background:${emp.color};" title="${fn}: ${sched.start}–${sched.end}"></div>`;
+        }
+        empCols+=`<div class="emp-col">
+          <div class="emp-col-header">
+            <div class="emp-col-avatar" style="background:${emp.color}">${init}</div>
+            <div class="emp-col-name">${fn}</div>
+          </div>
+          <div class="emp-col-bars">${gridLines}${barHtml}</div>
+        </div>`;
+      });
+    }
+    return `<div class="day-card">
+      <div class="day-card-header"><div class="day-name">${DAYS[dayIdx]}</div></div>
+      <div class="day-timeline">${hoursCol}<div class="emp-cols-wrap">${empCols}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ===== ANNUAL VIEW =====
+function renderAnnual() {
+  document.getElementById('yearLabel').textContent = state.currentYear;
+  renderAnnualWeekFilter();
+  renderEmpFilter();
+  renderAnnualGrid();
+}
+function renderAnnualWeekFilter() {
+  const el=document.getElementById('annualWeekFilter');
+  el.innerHTML=`<div class="emp-chip ${state.annualWeekFilter===-1?'active':''}" style="${state.annualWeekFilter===-1?'background:#4f46e518;border-color:#4f46e5;color:#4f46e5':''}" onclick="setAnnualWeekFilter(-1)">Toutes</div>`
+  +state.weeks.map((w,i)=>`<div class="emp-chip ${state.annualWeekFilter===i?'active':''}" style="${state.annualWeekFilter===i?'background:#4f46e518;border-color:#4f46e5;color:#4f46e5':''}" onclick="setAnnualWeekFilter(${i})">${w.name}</div>`).join('');
+}
+function setAnnualWeekFilter(idx) {
+  state.annualWeekFilter=idx; state.activeEmpFilter=[];
+  saveData(); renderAnnualWeekFilter(); renderEmpFilter(); renderAnnualGrid();
+}
+function renderEmpFilter() {
+  const visEmps = getAnnualEmps();
+  document.getElementById('empFilter').innerHTML=visEmps.map(({emp})=>{
+    const active=!state.activeEmpFilter.length||state.activeEmpFilter.includes(emp.id);
+    return `<div class="emp-chip ${active?'active':''}" style="${active?`background:${emp.color}18;border-color:${emp.color};color:${emp.color}`:''}" onclick="toggleEmpFilter('${emp.id}')"><div class="chip-dot" style="background:${emp.color}"></div>${emp.name.split(' ')[0]}</div>`;
+  }).join('');
+}
+function getAnnualEmps() {
+  // returns [{emp, weekIdx}]
+  const result=[];
+  const weeks = state.annualWeekFilter===-1 ? state.weeks : [state.weeks[state.annualWeekFilter]];
+  const seen=new Set();
+  weeks.forEach((w,wi)=>{
+    const actualIdx=state.annualWeekFilter===-1?wi:state.annualWeekFilter;
+    w.employees.forEach(emp=>{ if(!seen.has(emp.id)){seen.add(emp.id);result.push({emp,weekIdx:actualIdx});} });
+  });
+  return result;
+}
+function toggleEmpFilter(id) {
+  state.activeEmpFilter=state.activeEmpFilter.includes(id)?state.activeEmpFilter.filter(x=>x!==id):[...state.activeEmpFilter,id];
+  saveData(); renderEmpFilter(); renderAnnualGrid();
+}
+function renderAnnualGrid() {
+  const grid=document.getElementById('annualGrid');
+  let allEmps=getAnnualEmps();
+  if(state.activeEmpFilter.length) allEmps=allEmps.filter(({emp})=>state.activeEmpFilter.includes(emp.id));
+  if(!allEmps.length){grid.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div>Aucun collègue à afficher</div></div>`;return;}
+  let html='<div class="months-grid">';
+  for(let m=0;m<12;m++){
+    const dim=new Date(state.currentYear,m+1,0).getDate();
+    let dH='';
+    for(let d=1;d<=dim;d++){
+      const dateStr=`${state.currentYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dow=new Date(state.currentYear,m,d).getDay();
+      const isWE=dow===0||dow===6;
+      const cods=[];
+      allEmps.forEach(({emp})=>(emp.conges||[]).forEach(c=>{if(c.date===dateStr)cods.push({emp,c});}));
+      let content=`<div class="day-num">${d}</div>`;
+      if(cods.length){
+        const colors=cods.map(x=>x.emp.color);
+        const bg=colors.length===1?colors[0]:`linear-gradient(to bottom,${colors.map((c,i)=>`${c} ${i*100/colors.length}%,${c} ${(i+1)*100/colors.length}%`).join(',')})`;
+        content=`<div class="day-conge-bar" style="background:${bg}"></div><div class="day-conge-label">Cg</div>`;
+      }
+      dH+=`<div class="day-cell ${isWE?'weekend':''}" onclick="openCongeModal('${dateStr}')" title="${dateStr}${cods.length?'\n'+cods.map(x=>x.emp.name.split(' ')[0]).join(', '):''}"> ${content}</div>`;
+    }
+    html+=`<div class="month-block"><div class="month-label">${MONTHS[m]}</div><div class="month-days">${dH}</div></div>`;
+  }
+  html+='</div>';
+  grid.innerHTML=html;
+}
+function changeYear(dir){state.currentYear+=dir;saveData();renderAnnual();}
+
+// ===== CONGÉS =====
+let currentCongeDate=null, selectedCongeEmpId=null;
+function openCongeModal(dateStr){
+  currentCongeDate=dateStr; selectedCongeEmpId=null;
+  const d=new Date(dateStr+'T12:00');
+  document.getElementById('congeTitle').textContent='Congés';
+  document.getElementById('congeDateLabel').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  state.congeType='jour';
+  document.getElementById('congeForm').classList.add('hidden');
+  document.getElementById('congeHeuresField').classList.add('hidden');
+  setCongeOptUI('jour');
+  renderCongePeopleList(dateStr); renderCongeList(dateStr);
+  document.getElementById('modalConge').classList.remove('hidden');
+}
+function renderCongePeopleList(dateStr){
+  const container=document.getElementById('congePeopleList');
+  let allEmps=getAnnualEmps();
+  if(!allEmps.length){container.innerHTML=`<div style="color:var(--text3);font-size:12px;">Aucun·e collègue enregistré·e.</div>`;return;}
+  container.innerHTML=allEmps.map(({emp})=>{
+    const existing=(emp.conges||[]).find(c=>c.date===dateStr);
+    const statusTxt=existing?(existing.type==='jour'?'Congé journée entière':`Congé ${existing.start}–${existing.end}`):'';
+    const isSel=emp.id===selectedCongeEmpId;
+    return `<div class="conge-person-row ${isSel?'selected':''}" id="cprow_${emp.id}"
+      style="${isSel?`border-color:${emp.color};background:${emp.color}12;`:''}"
+      onclick="selectCongeEmp('${emp.id}','${dateStr}')">
+      <div class="emp-avatar" style="background:${emp.color};width:26px;height:26px;font-size:10px;">${getInitials(emp.name)}</div>
+      <div class="conge-person-name">${emp.name}</div>
+      ${existing?`<div class="conge-person-status" style="color:${emp.color};font-weight:500;">🌴 ${statusTxt}</div>`:'<div class="conge-person-status">—</div>'}
+    </div>`;
+  }).join('');
+}
+function selectCongeEmp(empId,dateStr){
+  selectedCongeEmpId=empId;
+  const emp=getAnnualEmps().find(({emp})=>emp.id===empId)?.emp; if(!emp) return;
+  document.getElementById('congeForm').classList.remove('hidden');
+  const existing=(emp.conges||[]).find(c=>c.date===dateStr);
+  if(existing){ state.congeType=existing.type; setCongeOptUI(existing.type); if(existing.type==='heures'){document.getElementById('congeStart').value=existing.start||'09:00';document.getElementById('congeEnd').value=existing.end||'13:00';} }
+  else { state.congeType='jour'; setCongeOptUI('jour'); }
+  document.querySelectorAll('.conge-person-row').forEach(r=>{r.classList.remove('selected');r.style.borderColor='';r.style.background='';});
+  const row=document.getElementById(`cprow_${empId}`);
+  if(row){row.classList.add('selected');row.style.borderColor=emp.color;row.style.background=emp.color+'12';}
+}
+function setCongeType(type){ state.congeType=type; setCongeOptUI(type); }
+function setCongeOptUI(type){
+  document.getElementById('congeOptJour').classList.toggle('conge-opt-active',type==='jour');
+  document.getElementById('congeOptHeures').classList.toggle('conge-opt-active',type==='heures');
+  document.getElementById('congeHeuresField').classList.toggle('hidden',type==='jour');
+}
+function addConge(){
+  if(!selectedCongeEmpId||!currentCongeDate) return;
+  // find emp across all weeks
+  let targetEmp=null;
+  state.weeks.forEach(w=>{ const e=w.employees.find(x=>x.id===selectedCongeEmpId); if(e) targetEmp=e; });
+  if(!targetEmp) return;
+  if(!targetEmp.conges) targetEmp.conges=[];
+  const existing=targetEmp.conges.findIndex(c=>c.date===currentCongeDate);
+  const conge={date:currentCongeDate,type:state.congeType,start:state.congeType==='heures'?document.getElementById('congeStart').value:null,end:state.congeType==='heures'?document.getElementById('congeEnd').value:null};
+  if(existing>=0) targetEmp.conges[existing]=conge; else targetEmp.conges.push(conge);
+  saveData(); selectedCongeEmpId=null;
+  document.getElementById('congeForm').classList.add('hidden');
+  renderCongePeopleList(currentCongeDate); renderCongeList(currentCongeDate); renderAnnualGrid();
+}
+function renderCongeList(dateStr){
+  const all=[];
+  state.weeks.forEach(w=>w.employees.forEach(emp=>(emp.conges||[]).filter(c=>c.date===dateStr).forEach(c=>all.push({emp,c}))));
+  const wrap=document.getElementById('congeExistingWrap');
+  const list=document.getElementById('congeList');
+  if(!all.length){wrap.classList.add('hidden');return;}
+  wrap.classList.remove('hidden');
+  list.innerHTML=all.map(({emp,c})=>`
+    <div class="conge-item">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <div class="emp-avatar" style="background:${emp.color};width:24px;height:24px;font-size:9px;">${getInitials(emp.name)}</div>
+        <div><div class="conge-item-date">${emp.name}</div><div class="conge-item-type">${c.type==='jour'?'Journée entière':`${c.start} → ${c.end}`}</div></div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeConge('${emp.id}','${c.date}')">Retirer</button>
+    </div>`).join('');
+}
+function removeConge(empId,date){
+  state.weeks.forEach(w=>{ const e=w.employees.find(x=>x.id===empId); if(e) e.conges=(e.conges||[]).filter(c=>c.date!==date); });
+  saveData();
+  if(empId===selectedCongeEmpId){selectedCongeEmpId=null;document.getElementById('congeForm').classList.add('hidden');}
+  renderCongePeopleList(date); renderCongeList(date); renderAnnualGrid();
+}
+
+// ===== MODALS =====
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.add('hidden');}));
+
+// ===== EXPORT PDF =====
+function exportPDF(){
+  const w = curWeek();
+  const emps = w.employees;
+  const HOURS=[9,10,11,12,13,14,15,16,17,18,19];
+  const SLOT_H=10;
+  const gridLinesHtml=HOURS.map((_,i)=>`<div style="position:absolute;left:0;right:0;top:${(i/10*100).toFixed(1)}%;height:1px;background:#efefef;"></div>`).join('');
+
+  function buildEmpColPrint(emp,dayIdx){
+    const sched=emp.schedule&&emp.schedule[dayIdx];
+    const init=getInitials(emp.name);
+    const fn=emp.name.split(' ')[0];
+    let barHtml='';
+    if(!sched||sched.type==='absent'){
+      barHtml=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span style="font-size:7px;color:#ccc;font-style:italic;writing-mode:vertical-rl;">Absent·e</span></div>`;
+    } else {
+      const[sh,sm]=(sched.start||'09:00').split(':').map(Number);
+      const[eh,em]=(sched.end||'19:00').split(':').map(Number);
+      const tP=((sh+sm/60-9)/SLOT_H)*100;
+      const hP=((eh+em/60)-(sh+sm/60))/SLOT_H*100;
+      barHtml=`<div style="position:absolute;top:${tP.toFixed(1)}%;height:${Math.max(hP,2).toFixed(1)}%;left:35%;right:35%;background:${emp.color};border-radius:99px;"></div>`;
+    }
+    return `<div style="flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;">
+      <div style="height:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;margin-bottom:2px;flex-shrink:0;">
+        <div style="width:14px;height:14px;border-radius:50%;background:${emp.color};display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:#fff;">${init}</div>
+        <div style="font-size:7px;font-weight:600;color:#475467;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;">${fn}</div>
+      </div>
+      <div style="flex:1;position:relative;background:#fafafa;border:1px solid #eaecf0;border-radius:4px;overflow:hidden;min-height:0;">
+        ${gridLinesHtml}${barHtml}
+      </div>
+    </div>`;
+  }
+
+  const hoursColHtml=`<div style="width:26px;flex-shrink:0;display:flex;flex-direction:column;padding-top:26px;min-height:0;">
+    ${HOURS.map(h=>`<div style="flex:1;font-size:6.5px;color:#aaa;font-family:monospace;display:flex;align-items:flex-start;justify-content:flex-end;padding-right:3px;position:relative;">
+      ${h}h<div style="position:absolute;right:0;top:0;width:3px;height:1px;background:#ddd;"></div></div>`).join('')}
+  </div>`;
+
+  const daysHtml=DAYS.map((dayName,i)=>{
+    const empCols=emps.length
+      ? emps.map(emp=>buildEmpColPrint(emp,i)).join('')
+      : `<div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:7px;color:#ccc;font-style:italic;">Aucun collègue</div>`;
+    return `<div style="border:1px solid #e4e7ec;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
+      <div style="background:#f9f9fc;padding:4px 7px;border-bottom:1px solid #e4e7ec;display:flex;align-items:center;justify-content:space-between;border-left:3px solid #4f46e5;flex-shrink:0;">
+        <span style="font-weight:700;font-size:9.5px;color:#101828;text-transform:uppercase;letter-spacing:0.5px;">${dayName}</span>
+      </div>
+      <div style="display:flex;gap:2px;padding:5px;flex:1;min-height:0;">
+        ${hoursColHtml}
+        <div style="display:flex;gap:2px;flex:1;min-height:0;">${empCols}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const legend=emps.map(e=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:9px;height:9px;border-radius:2px;background:${e.color};"></div><span style="font-size:7.5px;color:#475467;">${e.name}</span></div>`).join('');
+
+  const printHTML=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${w.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page{size:A4 landscape;margin:9mm 11mm;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;font-family:'Inter',sans-serif;background:#fff;color:#101828;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{display:flex;flex-direction:column;}
+  @media print{html,body{height:100%;}-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+</style>
+</head><body>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #4f46e5;padding-bottom:6px;margin-bottom:7px;flex-shrink:0;">
+  <div style="font-family:monospace;font-size:14px;font-weight:600;">planning<span style="color:#4f46e5;">pro</span></div>
+  <div style="font-size:13px;font-weight:700;color:#101828;">${w.name}</div>
+  <div style="font-size:7.5px;color:#aaa;font-family:monospace;">Imprimé le ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:5px;flex:1;min-height:0;">
+  ${daysHtml}
+</div>
+<div style="margin-top:6px;border-top:1px solid #eee;padding-top:5px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">${legend}</div>
+  <div style="font-size:7px;color:#ccc;font-family:monospace;">${w.name} — planningpro</div>
+</div>
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`;
+
+  const win=window.open('','_blank');
+  if(!win){alert('Autorisez les pop-ups pour exporter le PDF.');return;}
+  win.document.write(printHTML); win.document.close();
+}
+
+// ===== INIT =====
+loadData();
+renderWeekTabs();
+renderSidebar();
+renderWeek();
+
+// ===== LOGIN =====
+const PWD_HASH = '7f2d8e4a1c6b5f9e3d0a2c8b4e6f1a3d'; // placeholder, real check below
+function checkPassword() {
+  const val = document.getElementById('loginInput').value;
+  const input = document.getElementById('loginInput');
+  const err = document.getElementById('loginError');
+  if (val === 'NAGELEISEN') {
+    sessionStorage.setItem('pp_auth', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appWrapper').style.display = 'block';
+    input.classList.remove('error');
+    err.classList.remove('visible');
+  } else {
+    input.classList.add('error');
+    err.classList.add('visible');
+    input.value = '';
+    setTimeout(() => input.classList.remove('error'), 400);
+  }
+}
+function togglePwdVisibility() {
+  const inp = document.getElementById('loginInput');
+  const eye = document.getElementById('loginEye');
+  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+  else { inp.type = 'password'; eye.textContent = '👁'; }
+}
+// Auto-unlock if already authenticated this session
+if (sessionStorage.getItem('pp_auth') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appWrapper').style.display = 'block';
+}
+</script>
+</body>
+</html>
